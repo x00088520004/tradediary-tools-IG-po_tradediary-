@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Funded 風控規則書 — @po_tradediary</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #080808;
+    --bg2: #0f0f0f;
+    --bg3: #161616;
+    --gold: #C9A44A;
+    --gold-dim: #8a6f30;
+    --gold-light: #e8c97a;
+    --text: #e8e0d0;
+    --text-dim: #7a7268;
+    --text-muted: #3d3830;
+    --border: #1e1a14;
+    --border-gold: #2a2218;
+    --radius: 4px;
+    --teal: #2a7a6a;
+    --teal-dim: #1a4a3e;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    min-height: 100vh;
+  }
+
+  .top-bar { height: 3px; background: linear-gradient(90deg, transparent, var(--teal), var(--gold), var(--teal), transparent); }
+
+  .header {
+    padding: 36px 48px 28px;
+    border-bottom: 1px solid var(--border-gold);
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 24px;
+    align-items: end;
+  }
+
+  .stage-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #001a14;
+    border: 1px solid var(--teal);
+    border-radius: 2px;
+    padding: 4px 12px;
+    font-size: 10px;
+    color: #4acea8;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .stage-badge::before {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #4acea8;
+  }
+
+  h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 30px; font-weight: 600;
+    color: var(--gold-light);
+    line-height: 1.1; letter-spacing: 0.01em;
+  }
+
+  .header-sub { margin-top: 6px; font-size: 11px; color: var(--text-dim); letter-spacing: 0.06em; }
+
+  .header-right { text-align: right; font-size: 11px; color: var(--text-dim); line-height: 1.9; }
+  .header-right .handle { color: var(--gold-dim); font-size: 12px; }
+
+  .progress-bar {
+    padding: 16px 48px;
+    display: flex; align-items: center; gap: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .prog-track { flex: 1; height: 2px; background: var(--border-gold); border-radius: 1px; overflow: hidden; }
+  .prog-fill { height: 100%; background: linear-gradient(90deg, var(--teal), var(--gold)); transition: width 0.5s; }
+  .prog-label { font-size: 10px; color: var(--text-dim); letter-spacing: 0.06em; white-space: nowrap; }
+
+  .main { padding: 32px 48px 80px; max-width: 860px; }
+
+  /* Funded-specific context */
+  .context-box {
+    border: 1px solid var(--border-gold);
+    border-left: 3px solid var(--teal);
+    border-radius: var(--radius);
+    background: #060e0b;
+    padding: 20px 24px;
+    margin-bottom: 32px;
+  }
+
+  .context-box h3 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 15px; color: #4acea8;
+    margin-bottom: 12px; letter-spacing: 0.04em;
+  }
+
+  .context-box p { font-size: 12px; color: var(--text-dim); line-height: 1.8; margin-bottom: 8px; }
+  .context-box p:last-child { margin-bottom: 0; }
+  .context-box strong { color: var(--text); }
+
+  /* Phase shift warning */
+  .phase-shift {
+    background: #0d0806;
+    border: 1px solid #4a2a00;
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    margin-top: 14px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .phase-col h4 { font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 8px; }
+  .phase-col.challenge h4 { color: var(--text-dim); }
+  .phase-col.funded h4 { color: #4acea8; }
+  .phase-col p { font-size: 11px; color: var(--text-dim); line-height: 1.7; }
+
+  /* Section */
+  .section {
+    margin-bottom: 28px;
+    border: 1px solid var(--border-gold);
+    border-top: 2px solid var(--teal-dim);
+    background: var(--bg2);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .section-header {
+    padding: 14px 22px;
+    display: flex; align-items: center; gap: 12px;
+    background: var(--bg3);
+    border-bottom: 1px solid var(--border-gold);
+  }
+
+  .sec-num {
+    width: 22px; height: 22px;
+    border: 1px solid var(--teal-dim);
+    border-radius: 2px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; color: #4acea8; flex-shrink: 0;
+  }
+
+  .sec-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 16px; font-weight: 600;
+    color: var(--gold-light); letter-spacing: 0.02em;
+  }
+
+  .sec-tag { margin-left: auto; font-size: 10px; color: var(--text-dim); letter-spacing: 0.08em; text-transform: uppercase; }
+
+  .section-body { padding: 22px; }
+
+  .row { display: grid; gap: 14px; margin-bottom: 14px; }
+  .row-2 { grid-template-columns: 1fr 1fr; }
+  .row-3 { grid-template-columns: 1fr 1fr 1fr; }
+
+  .field { display: flex; flex-direction: column; gap: 5px; }
+
+  label { font-size: 10px; color: var(--text-dim); letter-spacing: 0.08em; text-transform: uppercase; }
+
+  input[type=text], input[type=number], input[type=date], select, textarea {
+    background: var(--bg);
+    border: 1px solid var(--border-gold);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    padding: 9px 12px;
+    outline: none;
+    transition: border-color 0.2s;
+    width: 100%;
+  }
+
+  input:focus, select:focus, textarea:focus { border-color: var(--teal); }
+  input::placeholder, textarea::placeholder { color: var(--text-muted); }
+  textarea { resize: vertical; min-height: 70px; line-height: 1.6; }
+
+  .calc {
+    background: var(--bg);
+    border: 1px solid var(--border-gold);
+    border-left: 2px solid var(--teal);
+    border-radius: var(--radius);
+    padding: 9px 14px;
+    font-size: 12px; color: var(--text-dim);
+    min-height: 38px;
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  .calc .v { font-size: 15px; font-weight: 500; color: #4acea8; }
+
+  .pill { display: inline-flex; align-items: center; font-size: 10px; padding: 2px 8px; border-radius: 2px; letter-spacing: 0.05em; white-space: nowrap; }
+  .pill-ok { background: #0d2e1a; color: #3aaf6e; border: 1px solid #1a4f2a; }
+  .pill-warn { background: #2a1e00; color: #c8942a; border: 1px solid #4a3500; }
+  .pill-danger { background: #2a0d0a; color: #e05a4a; border: 1px solid #4a1a14; }
+
+  .tip {
+    border: 1px solid var(--border-gold);
+    border-left: 2px solid var(--teal-dim);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    font-size: 11px; color: var(--text-dim); line-height: 1.7;
+    margin-bottom: 14px; background: var(--bg);
+  }
+
+  .tip strong { color: #4acea8; }
+
+  .divider { height: 1px; background: var(--border-gold); margin: 18px 0; }
+
+  /* Funded-specific: account health tracker */
+  .health-track {
+    background: var(--bg);
+    border: 1px solid var(--border-gold);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-top: 4px;
+  }
+
+  .health-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 7px 0; border-bottom: 1px solid var(--border);
+    font-size: 12px;
+  }
+
+  .health-row:last-child { border-bottom: none; }
+  .health-row .key { color: var(--text-dim); }
+  .health-row .val { color: #4acea8; font-weight: 500; }
+  .health-row .val.warn { color: #c8942a; }
+  .health-row .val.safe { color: #3aaf6e; }
+
+  /* Preservation mode */
+  .preservation {
+    background: #060e0b;
+    border: 1px solid var(--teal-dim);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    margin-bottom: 14px;
+  }
+
+  .preservation h4 {
+    font-size: 11px; color: #4acea8;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .pres-row {
+    display: grid; grid-template-columns: 140px 1fr 1fr;
+    gap: 10px; align-items: center;
+    padding: 8px 0; border-bottom: 1px solid var(--border);
+    font-size: 11px;
+  }
+
+  .pres-row:last-child { border-bottom: none; }
+  .pres-row .zone { color: var(--text-dim); }
+  .pres-row .zone.active { color: #4acea8; }
+
+  /* KS rows */
+  .ks-row {
+    padding: 14px 0; border-bottom: 1px solid var(--border);
+    display: grid; grid-template-columns: 32px 1fr; gap: 12px;
+  }
+
+  .ks-row:last-child { border-bottom: none; }
+
+  .ks-num {
+    width: 28px; height: 28px;
+    border: 1px solid var(--teal-dim);
+    border-radius: 2px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; color: #4acea8; margin-top: 2px;
+  }
+
+  .ks-content { display: flex; flex-direction: column; gap: 8px; }
+  .ks-label { font-size: 12px; color: var(--text); font-weight: 500; }
+  .ks-desc { font-size: 11px; color: var(--text-dim); line-height: 1.6; }
+  .ks-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  /* Funded scenarios - different from challenge */
+  .scenarios { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+
+  .scenario {
+    border: 1px solid var(--border-gold);
+    border-radius: var(--radius);
+    padding: 14px; background: var(--bg);
+  }
+
+  .scenario h4 { font-size: 11px; color: var(--teal-dim); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 8px; }
+  .scenario p { font-size: 11px; color: var(--text-dim); line-height: 1.6; }
+  .scenario textarea { margin-top: 8px; min-height: 56px; font-size: 12px; }
+
+  /* Scaling section */
+  .scale-row {
+    display: grid; grid-template-columns: 1fr 2fr;
+    gap: 14px; align-items: start;
+    padding: 12px 0; border-bottom: 1px solid var(--border);
+  }
+
+  .scale-row:last-child { border-bottom: none; }
+
+  .scale-condition { font-size: 11px; color: var(--text-dim); line-height: 1.6; }
+  .scale-condition strong { color: var(--text); display: block; margin-bottom: 4px; }
+
+  /* Pledge */
+  .pledge {
+    border: 1px solid var(--teal-dim);
+    border-radius: var(--radius);
+    padding: 24px; background: var(--bg3);
+    margin-top: 36px; position: relative; overflow: hidden;
+  }
+
+  .pledge::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, var(--teal), var(--gold), transparent);
+  }
+
+  .pledge h3 { font-family: 'Cormorant Garamond', serif; font-size: 16px; color: var(--gold); margin-bottom: 12px; letter-spacing: 0.04em; }
+  .pledge p { font-size: 12px; color: var(--text-dim); line-height: 1.8; margin-bottom: 18px; }
+  .sign-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+
+  .btn-row { display: flex; gap: 12px; margin-top: 28px; justify-content: flex-end; }
+
+  .btn { padding: 10px 22px; border-radius: var(--radius); font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.08em; cursor: pointer; transition: all 0.2s; border: none; }
+  .btn-ghost { background: transparent; border: 1px solid var(--border-gold); color: var(--text-dim); }
+  .btn-ghost:hover { border-color: var(--gold-dim); color: var(--text); }
+  .btn-primary { background: var(--teal-dim); color: #e8e0d0; font-weight: 500; }
+  .btn-primary:hover { background: var(--teal); color: #000; }
+
+  .footer {
+    border-top: 1px solid var(--border-gold);
+    padding: 18px 48px;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 10px; color: var(--text-muted); letter-spacing: 0.06em;
+  }
+  .footer .handle { color: var(--gold-dim); }
+
+  @media print {
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    body { background: #fff !important; color: #111 !important; font-size: 11px; }
+    .btn-row, .progress-bar { display: none !important; }
+    .top-bar { background: #b8903a !important; height: 2px !important; }
+    .header { border-bottom: 1px solid #ddd !important; padding: 20px 32px 16px !important; }
+    h1 { color: #111 !important; font-size: 22px !important; }
+    .stage-badge { background: #fff !important; border: 1px solid #b8903a !important; color: #7a5a10 !important; }
+    .stage-badge::before { background: #b8903a !important; }
+    .header-sub, .header-right { color: #555 !important; }
+    .header-right .handle { color: #7a5a10 !important; }
+    .context-box { background: #fafaf8 !important; border: 1px solid #ddd !important; border-left: 3px solid #b8903a !important; }
+    .context-box h3 { color: #7a5a10 !important; }
+    .context-box p, .context-box strong { color: #333 !important; }
+    .phase-shift { background: #f5f5f5 !important; border: 1px solid #ddd !important; }
+    .phase-col h4 { color: #666 !important; }
+    .phase-col.funded h4 { color: #7a5a10 !important; }
+    .phase-col p { color: #555 !important; }
+    .section { background: #fff !important; border: 1px solid #ccc !important; border-top: 2px solid #b8903a !important; break-inside: avoid; margin-bottom: 16px !important; }
+    .section-header { background: #f8f6f0 !important; border-bottom: 1px solid #ddd !important; }
+    .sec-num { border: 1px solid #b8903a !important; color: #7a5a10 !important; }
+    .sec-title { color: #111 !important; }
+    .sec-tag { color: #888 !important; }
+    .section-body { padding: 16px !important; }
+    .tip { background: #fafaf8 !important; border: 1px solid #ddd !important; border-left: 2px solid #b8903a !important; color: #444 !important; }
+    .tip strong { color: #7a5a10 !important; }
+    input[type=text], input[type=number], input[type=date], select { background: #fff !important; border: 1px solid #bbb !important; color: #111 !important; }
+    textarea { background: #fafafa !important; border: 1px solid #bbb !important; color: #111 !important; height: auto !important; min-height: 0 !important; overflow: visible !important; }
+    .calc { background: #f8f6f0 !important; border: 1px solid #ddd !important; border-left: 2px solid #b8903a !important; color: #333 !important; }
+    .calc .v { color: #7a5a10 !important; }
+    label { color: #666 !important; }
+    .health-track { background: #fafafa !important; border: 1px solid #ddd !important; }
+    .health-row { border-bottom: 1px solid #eee !important; }
+    .health-row .key { color: #666 !important; }
+    .health-row .val { color: #7a5a10 !important; }
+    .preservation { background: #fafaf8 !important; border: 1px solid #ddd !important; }
+    .preservation h4 { color: #7a5a10 !important; }
+    .pres-row { border-bottom: 1px solid #eee !important; }
+    .scenarios { break-inside: avoid; }
+    .scenario { background: #fafafa !important; border: 1px solid #ddd !important; }
+    .scenario h4 { color: #7a5a10 !important; }
+    .scenario p { color: #555 !important; }
+    .ks-row { border-bottom: 1px solid #eee !important; }
+    .ks-num { border: 1px solid #b8903a !important; color: #7a5a10 !important; }
+    .ks-label { color: #111 !important; }
+    .ks-desc { color: #555 !important; }
+    .pill { border: 1px solid #bbb !important; background: #f5f5f5 !important; color: #444 !important; }
+    .scale-row { border-bottom: 1px solid #eee !important; }
+    .scale-condition { color: #555 !important; }
+    .scale-condition strong { color: #111 !important; }
+    .pledge { background: #fafaf8 !important; border: 1px solid #b8903a !important; }
+    .pledge::before { background: #b8903a !important; }
+    .pledge h3 { color: #7a5a10 !important; }
+    .pledge p { color: #444 !important; }
+    .divider { background: #ddd !important; }
+    .footer { border-top: 1px solid #ddd !important; color: #888 !important; }
+    .footer .handle { color: #7a5a10 !important; }
+    @page { margin: 15mm 15mm 15mm 15mm; size: A4; }
+    textarea { page-break-inside: avoid; }
+    .section { page-break-inside: avoid; }
+    .ks-row { page-break-inside: avoid; }
+    .scenario { page-break-inside: avoid; }
+  }
+
+  @media (max-width: 640px) {
+    .header { padding: 24px 20px; grid-template-columns: 1fr; }
+    .main { padding: 24px 20px 60px; }
+    .progress-bar { padding: 14px 20px; }
+    .row-2, .row-3, .scenarios, .sign-row, .ks-inputs, .phase-shift, .pres-row, .scale-row { grid-template-columns: 1fr; }
+    .footer { padding: 16px 20px; flex-direction: column; gap: 8px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="top-bar"></div>
+
+<div class="header">
+  <div>
+    <div class="stage-badge">Funded 資金帳號</div>
+    <h1>風控規則書</h1>
+    <div class="header-sub">目標：守住帳號，穩定提款，不因一次失控歸零</div>
+  </div>
+  <div class="header-right">
+    <div class="handle">@po_tradediary</div>
+    <div>填寫日期：<span id="today-date">——</span></div>
+    <div>帳號取得日：<span id="funded-since">——</span></div>
+  </div>
+</div>
+
+<div class="progress-bar">
+  <div class="prog-track"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+  <div class="prog-label" id="prog-label">開始填寫你的規則</div>
+</div>
+
+<div class="main">
+
+  <!-- Funded context -->
+  <div class="context-box">
+    <h3>Funded 的根本張力</h3>
+    <p>
+      你不再需要<strong>達成目標</strong>——你已經通過了。現在的問題是<strong>守住帳號</strong>。
+      但人的大腦在這個階段會出現一個反應：鬆懈。「我已經通過了，應該可以。」
+      這個念頭是 Funded 帳號最常見的死因。
+    </p>
+    <p>
+      另一個常見情境是第一次重大虧損後的<strong>報復心態</strong>。Challenge 時你是在花費用搏通過，
+      Funded 之後你虧的是<strong>你自己的分潤和帳號信用</strong>。這個壓力結構不一樣，觸發的情緒也不一樣。
+    </p>
+    <div class="phase-shift">
+      <div class="phase-col challenge">
+        <h4>Challenge 的目標</h4>
+        <p>達到獲利 → 通過<br>用最少的回撤換取目標達成<br>時間壓力存在</p>
+      </div>
+      <div class="phase-col funded">
+        <h4>Funded 的目標</h4>
+        <p>穩定提款 → 持續<br>保護帳號比追求獲利更重要<br>沒有截止日，但有累積效應</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- S1: Account basics -->
+  <div class="section">
+    <div class="section-header">
+      <div class="sec-num">1</div>
+      <div class="sec-title">帳號與提款目標設定</div>
+      <div class="sec-tag">基準</div>
+    </div>
+    <div class="section-body">
+      <div class="row row-3">
+        <div class="field">
+          <label>Prop Firm</label>
+          <input type="text" id="firm" placeholder="例：FTMO" oninput="calc()">
+        </div>
+        <div class="field">
+          <label>帳號規模 (USD)</label>
+          <input type="number" id="size" placeholder="100000" oninput="calc()">
+        </div>
+        <div class="field">
+          <label>交易品種</label>
+          <input type="text" id="instrument" placeholder="XAUUSD / NAS100">
+        </div>
+      </div>
+      <div class="row row-3">
+        <div class="field">
+          <label>每日損失上限 — Prop Firm (%)</label>
+          <input type="number" id="firm-daily" placeholder="5" step="0.1" oninput="calc()">
+        </div>
+        <div class="field">
+          <label>總回撤上限 — Prop Firm (%)</label>
+          <input type="number" id="firm-total" placeholder="10" step="0.1" oninput="calc()">
+        </div>
+        <div class="field">
+          <label>分潤比例 (%)</label>
+          <input type="number" id="split" placeholder="80" step="1" oninput="calc()">
+        </div>
+      </div>
+      <div class="row row-2">
+        <div class="field">
+          <label>月提款目標 (%)</label>
+          <input type="number" id="monthly-target" placeholder="例：4" step="0.1" oninput="calc()">
+        </div>
+        <div class="field">
+          <label>月提款目標金額（我的分潤）</label>
+          <div class="calc" id="monthly-usd">← 填入後計算</div>
+        </div>
+      </div>
+
+      <div class="health-track" id="health-box" style="display:none">
+        <div class="health-row"><span class="key">帳號規模</span><span class="val" id="h-size">—</span></div>
+        <div class="health-row"><span class="key">每日損失上限</span><span class="val" id="h-daily">—</span></div>
+        <div class="health-row"><span class="key">總回撤上限（可虧空間）</span><span class="val" id="h-total">—</span></div>
+        <div class="health-row"><span class="key">月目標 vs 每日上限 比例</span><span class="val" id="h-ratio">—</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- S2: Position sizing -->
+  <div class="section">
+    <div class="section-header">
+      <div class="sec-num">2</div>
+      <div class="sec-title">倉位規則</div>
+      <div class="sec-tag">保守優先</div>
+    </div>
+    <div class="section-body">
+      <div class="tip">
+        <strong>Funded 的倉位邏輯與 Challenge 不同：</strong>Challenge 你需要一定的節奏達到目標，
+        Funded 你的首要任務是<strong>不爆帳</strong>。建議每筆比 Challenge 時更保守 20–30%。
+        穩定的小獲利累積，比偶爾的大單更能保住帳號。
+      </div>
+
+      <div class="row row-2">
+        <div class="field">
+          <label>每筆風險比例 (%)</label>
+          <input type="number" id="risk-pct" placeholder="0.75" step="0.1" oninput="calc()">
+        </div>
+        <div class="field">
+          <label>每筆最大虧損</label>
+          <div class="calc" id="risk-usd">← 自動計算</div>
+        </div>
+      </div>
+      <div class="row row-2">
+        <div class="field">
+          <label>連輸幾筆觸發每日上限？</label>
+          <div class="calc" id="loss-daily">← 自動計算</div>
+        </div>
+        <div class="field">
+          <label>連輸幾筆觸發總回撤上限？</label>
+          <div class="calc" id="loss-total">← 自動計算</div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Preservation mode — Funded specific -->
+      <div class="preservation">
+        <h4>保護模式：根據帳號狀態調整倉位</h4>
+        <div class="pres-row">
+          <div class="zone">正常狀態</div>
+          <div class="field">
+            <label>當帳號虧損低於 (%)</label>
+            <input type="number" id="normal-threshold" placeholder="例：3" step="0.1" oninput="calc()">
+          </div>
+          <div class="field">
+            <label>每筆風險</label>
+            <div class="calc" id="normal-risk">— （= 標準倉位）</div>
+          </div>
+        </div>
+        <div class="pres-row">
+          <div class="zone warn-zone">警戒狀態</div>
+          <div class="field">
+            <label>當帳號虧損介於 (%) </label>
+            <div class="calc" id="warn-range" style="min-height:38px; font-size:11px">← 自動計算</div>
+          </div>
+          <div class="field">
+            <label>每筆風險降至</label>
+            <input type="number" id="warn-risk" placeholder="例：0.5" step="0.1" oninput="calc()">
+          </div>
+        </div>
+        <div class="pres-row">
+          <div class="zone" style="color:#e05a4a">危險狀態</div>
+          <div class="field">
+            <label>當帳號虧損超過 (%)</label>
+            <div class="calc" id="danger-threshold" style="min-height:38px; font-size:11px">← 自動計算（= 個人每日上限）</div>
+          </div>
+          <div class="field">
+            <label>動作</label>
+            <input type="text" id="danger-action" placeholder="停止今日 / 降至最小倉">
+          </div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>我設這個比例的理由</label>
+        <textarea id="risk-reason" placeholder="Funded 的核心邏輯是長期存活，不是單月最大化。寫下你為什麼選這個數字。"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- S3: Daily limit -->
+  <div class="section">
+    <div class="section-header">
+      <div class="sec-num">3</div>
+      <div class="sec-title">個人每日損失上限</div>
+      <div class="sec-tag">帳號保護</div>
+    </div>
+    <div class="section-body">
+      <div class="tip">
+        <strong>Funded 的安全邊際更重要：</strong>Challenge 爆帳你損失的是費用。
+        Funded 爆帳你損失的是帳號資格、分潤資格、和你建立這個帳號花的所有時間。
+        <strong>建議設在 Prop Firm 上限的 50–60%。</strong>
+      </div>
+      <div class="row row-3">
+        <div class="field">
+          <label>個人每日上限 (%)</label>
+          <input type="number" id="my-daily" placeholder="2.5" step="0.1" oninput="calc()">
+        </div>
+        <div class="field">
+          <label>對應金額</label>
+          <div class="calc" id="my-daily-usd">← 自動計算</div>
+        </div>
+        <div class="field">
+          <label>緩衝空間</label>
+          <div class="calc" id="buffer">← 自動計算</div>
+        </div>
+      </div>
+      <div class="field" style="margin-top:4px">
+        <label>達到個人上限後，下一步</label>
+        <textarea id="stop-action" placeholder="Funded 的停止動作要比 Challenge 更堅定。帳號的長期價值遠大於今天的一兩筆。"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- S4: Kill Switch - Funded scenarios -->
+  <div class="section">
+    <div class="section-header">
+      <div class="sec-num">4</div>
+      <div class="sec-title">Kill-Switch 觸發條件</div>
+      <div class="sec-tag">Funded 版情境</div>
+    </div>
+    <div class="section-body">
+      <div class="tip">
+        <strong>Funded 的情緒觸發和 Challenge 不同：</strong>不是「快達標了多開一點」，
+        而是「我已經 Funded 了應該可以」和「上個月賺了很多這個月可以大一點」。
+        鬆懈和過度自信是 Funded 帳號的主要殺手。
+      </div>
+
+      <div class="ks-row">
+        <div class="ks-num">L1</div>
+        <div class="ks-content">
+          <div class="ks-label">單筆損失觸發</div>
+          <div class="ks-desc">一筆虧損超過計畫 → 評估這筆是否符合你的策略，還是情緒下單</div>
+          <div class="ks-inputs">
+            <div class="field">
+              <label>觸發比例 (%)</label>
+              <input type="number" id="ks1" placeholder="例：1" step="0.1" oninput="calc()">
+            </div>
+            <div class="field">
+              <label>對應金額</label>
+              <div class="calc" id="ks1-usd" style="min-height:38px">—</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="ks-row">
+        <div class="ks-num">L2</div>
+        <div class="ks-content">
+          <div class="ks-label">當日損失觸發（= 個人每日上限）</div>
+          <div class="ks-desc">今日累計達此值 → 停止。帳號的長期價值遠大於今天</div>
+          <div class="ks-inputs">
+            <div class="field">
+              <label>觸發金額</label>
+              <div class="calc" id="ks2-display" style="min-height:38px">← 自動帶入個人每日上限</div>
+            </div>
+            <div class="field">
+              <label>觸發後第一動作</label>
+              <input type="text" id="ks2-action" placeholder="例：關閉平台、記錄今日">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="ks-row">
+        <div class="ks-num">L3</div>
+        <div class="ks-content">
+          <div class="ks-label">連敗觸發</div>
+          <div class="ks-desc">連續虧損達此筆數 → 強制冷卻，重新評估市場狀態是否適合你的策略</div>
+          <div class="ks-inputs">
+            <div class="field">
+              <label>連敗幾筆</label>
+              <input type="number" id="ks3-n" placeholder="例：3">
+            </div>
+            <div class="field">
+              <label>冷卻時間</label>
+              <input type="text" id="ks3-time" placeholder="例：1 小時">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="ks-row">
+        <div class="ks-num">L4</div>
+        <div class="ks-content">
+          <div class="ks-label">Funded 特有情緒觸發</div>
+          <div class="ks-desc">以下任一念頭出現 → 立即停止</div>
+          <div class="scenarios">
+            <div class="scenario">
+              <h4>情境 A：鬆懈</h4>
+              <p>「我已經 Funded 了，應該可以放寬一點。」</p>
+              <textarea id="sc-a" placeholder="你遇到這個念頭時要做什麼？"></textarea>
+            </div>
+            <div class="scenario">
+              <h4>情境 B：上月成績好</h4>
+              <p>「上個月賺了 X%，這個月可以大膽一點。」</p>
+              <textarea id="sc-b" placeholder="你遇到這個念頭時要做什麼？"></textarea>
+            </div>
+            <div class="scenario">
+              <h4>情境 C：第一次大虧後</h4>
+              <p>「我要把這個月的虧損追回來。」</p>
+              <textarea id="sc-c" placeholder="你遇到這個念頭時要做什麼？"></textarea>
+            </div>
+            <div class="scenario">
+              <h4>情境 D：你自己的警示語</h4>
+              <p>根據你的 Funded 經驗，還有哪些念頭讓你失控？</p>
+              <textarea id="sc-d" placeholder="寫下你個人的觸發語言"></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+      <div class="field">
+        <label>觸發 Kill-Switch 後的重置流程</label>
+        <textarea id="reset" placeholder="按順序寫：&#10;1. ___&#10;2. ___&#10;3. ___" style="min-height:80px"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- S5: Scaling rules - Funded specific -->
+  <div class="section">
+    <div class="section-header">
+      <div class="sec-num">5</div>
+      <div class="sec-title">加倉與縮倉協議</div>
+      <div class="sec-tag">規模管理</div>
+    </div>
+    <div class="section-body">
+      <div class="tip">
+        <strong>Funded 才有的問題：</strong>什麼時候可以加倉？加了之後如果虧怎麼辦？
+        這些條件要在今天清醒的時候寫好，不能在「狀態很好」的當下憑感覺決定。
+      </div>
+
+      <div class="scale-row">
+        <div class="scale-condition">
+          <strong>可以考慮加倉的條件</strong>
+          連續穩定盈利的最低標準
+        </div>
+        <div class="field">
+          <textarea id="scale-up-condition" placeholder="例：連續 15 個交易日盈利，且每日虧損從未超過個人上限，當月獲利 > 3%"></textarea>
+        </div>
+      </div>
+
+      <div class="scale-row">
+        <div class="scale-condition">
+          <strong>加倉後若虧損</strong>
+          觸發什麼條件就縮回去
+        </div>
+        <div class="field">
+          <textarea id="scale-down-condition" placeholder="例：加倉後任何一天虧損超過新倉位的每日上限，立即縮回原來的規模"></textarea>
+        </div>
+      </div>
+
+      <div class="scale-row">
+        <div class="scale-condition">
+          <strong>絕對不加倉的情況</strong>
+          無論狀態多好
+        </div>
+        <div class="field">
+          <textarea id="never-scale" placeholder="例：帳號當月累計虧損超過 2% / 上週有任何一天觸發 Kill-Switch / 當下有任何情緒壓力"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- S6: Identity -->
+  <div class="section">
+    <div class="section-header">
+      <div class="sec-num">6</div>
+      <div class="sec-title">Trader 身份聲明</div>
+      <div class="sec-tag">身份錨點</div>
+    </div>
+    <div class="section-body">
+      <div class="tip">
+        <strong>Funded 之後的身份問題：</strong>通過之前你是「努力通關的人」，通過之後你是「管理資金的人」。
+        這是兩種不同的身份，需要不同的心態。你的聲明要反映這個轉變。
+      </div>
+      <div class="field">
+        <label>我是一個 Funded Trader，這意味著</label>
+        <textarea id="identity" placeholder="例：我是一個 Funded Trader，這意味著我管理的是 Prop Firm 的資金，我的工作是穩定地產生獲利，不是證明自己有多強。我不需要每筆都對，我需要的是每個月都還在這裡。" style="min-height:110px" oninput="calc()"></textarea>
+      </div>
+      <div class="row row-2" style="margin-top:12px">
+        <div class="field">
+          <label>我的身份錨點物件</label>
+          <input type="text" id="anchor" placeholder="例：第一次提款的記錄截圖 / 桌上的某樣東西">
+        </div>
+        <div class="field">
+          <label>這份規則書放置的位置</label>
+          <input type="text" id="location" placeholder="例：開盤前必看，Notion 書籤第一個">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pledge -->
+  <div class="pledge">
+    <h3>承諾簽署</h3>
+    <p>
+      這份規則書的所有條件，是我在清醒的狀態下設定的。<br>
+      我承諾每個交易日開始前閱讀這份文件。<br>
+      我的 Funded 帳號的長期價值，遠大於任何單一交易的潛在獲利。<br>
+      任何觸發條件達到時立即執行，不允許「這次例外」。
+    </p>
+    <div class="sign-row">
+      <div class="field">
+        <label>交易者姓名 / 代號</label>
+        <input type="text" id="trader-name" placeholder="你的名字或代號">
+      </div>
+      <div class="field">
+        <label>帳號取得日期</label>
+        <input type="date" id="funded-date" oninput="updateFundedDate()">
+      </div>
+      <div class="field">
+        <label>下次規則複查日</label>
+        <input type="date" id="review-date">
+      </div>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-ghost" onclick="if(confirm('確定清空所有內容？'))location.reload()">重新填寫</button>
+    <button class="btn btn-primary" onclick="window.print()">列印 / 存成 PDF</button>
+  </div>
+
+</div>
+
+<div class="footer">
+  <div>Funded 風控規則書 — Survive · Stabilise · Thrive</div>
+  <div class="handle">@po_tradediary</div>
+</div>
+
+<script>
+  const now = new Date();
+  document.getElementById('today-date').textContent =
+    now.getFullYear() + '/' + String(now.getMonth()+1).padStart(2,'0') + '/' + String(now.getDate()).padStart(2,'0');
+
+  function n(id) { return parseFloat(document.getElementById(id).value) || 0; }
+  function usd(val) { return '$' + val.toLocaleString('en-US', {minimumFractionDigits:0, maximumFractionDigits:0}); }
+  function pill(cls, text) { return `<span class="pill pill-${cls}">${text}</span>`; }
+
+  function calc() {
+    const size = n('size');
+    const riskPct = n('risk-pct');
+    const firmDaily = n('firm-daily');
+    const firmTotal = n('firm-total');
+    const myDaily = n('my-daily');
+    const split = n('split');
+    const monthlyTarget = n('monthly-target');
+    const ks1 = n('ks1');
+    const normalThreshold = n('normal-threshold');
+    const warnRisk = n('warn-risk');
+
+    const riskUsd = size * riskPct / 100;
+    const firmDailyUsd = size * firmDaily / 100;
+    const firmTotalUsd = size * firmTotal / 100;
+    const myDailyUsd = size * myDaily / 100;
+
+    if (riskUsd > 0)
+      document.getElementById('risk-usd').innerHTML = `<span class="v">${usd(riskUsd)}</span><span style="font-size:10px;color:var(--text-muted)"> / 筆</span>`;
+
+    if (riskPct > 0 && firmDaily > 0) {
+      const nD = Math.floor(firmDaily / riskPct);
+      const cls = nD <= 3 ? 'danger' : nD <= 6 ? 'warn' : 'ok';
+      const msg = nD <= 3 ? '緩衝太少' : nD <= 6 ? '可接受' : '充足';
+      document.getElementById('loss-daily').innerHTML = `<span class="v">${nD} 筆</span>&nbsp;${pill(cls, msg)}`;
+    }
+
+    if (riskPct > 0 && firmTotal > 0) {
+      const nT = Math.floor(firmTotal / riskPct);
+      document.getElementById('loss-total').innerHTML = `<span class="v">${nT} 筆</span>`;
+    }
+
+    if (myDailyUsd > 0)
+      document.getElementById('my-daily-usd').innerHTML = `<span class="v">${usd(myDailyUsd)}</span>`;
+
+    if (firmDailyUsd > 0 && myDailyUsd > 0) {
+      const buf = firmDailyUsd - myDailyUsd;
+      const bufPct = ((buf / size) * 100).toFixed(1);
+      if (buf >= 0) {
+        const cls = parseFloat(bufPct) >= 2 ? 'ok' : 'warn';
+        document.getElementById('buffer').innerHTML = `<span class="v">${usd(buf)}</span>&nbsp;${pill(cls, bufPct + '% 緩衝')}`;
+      }
+    }
+
+    // Monthly
+    if (size > 0 && monthlyTarget > 0 && split > 0) {
+      const gross = size * monthlyTarget / 100;
+      const net = gross * split / 100;
+      document.getElementById('monthly-usd').innerHTML = `<span class="v">${usd(net)}</span><span style="font-size:10px;color:var(--text-muted)"> 我的分潤</span>`;
+    }
+
+    // Health box
+    if (size > 0 && firmDaily > 0) {
+      document.getElementById('h-size').textContent = usd(size);
+      document.getElementById('h-daily').textContent = usd(firmDailyUsd);
+      document.getElementById('h-total').textContent = usd(firmTotalUsd);
+      if (monthlyTarget > 0) {
+        const dailyNeed = (size * monthlyTarget / 100) / 22;
+        const ratio = (dailyNeed / firmDailyUsd * 100).toFixed(0);
+        document.getElementById('h-ratio').innerHTML = ratio + '%';
+      }
+      document.getElementById('health-box').style.display = 'block';
+    }
+
+    // Preservation zones
+    if (normalThreshold > 0 && myDaily > 0) {
+      const warnStart = normalThreshold;
+      const warnEnd = myDaily;
+      document.getElementById('warn-range').innerHTML = `<span class="v">${warnStart}% – ${warnEnd}%</span>`;
+      document.getElementById('danger-threshold').innerHTML = `<span class="v">${myDaily}%</span><span style="font-size:10px;color:var(--text-muted)"> (= 個人上限)</span>`;
+    }
+
+    if (riskPct > 0)
+      document.getElementById('normal-risk').innerHTML = `<span class="v">${riskPct}%</span><span style="font-size:10px;color:var(--text-muted)"> 標準倉</span>`;
+
+    // KS1
+    if (ks1 > 0 && size > 0)
+      document.getElementById('ks1-usd').innerHTML = `<span class="v">${usd(size * ks1 / 100)}</span>`;
+
+    // KS2
+    if (myDailyUsd > 0)
+      document.getElementById('ks2-display').innerHTML = `<span class="v">${usd(myDailyUsd)}</span>`;
+
+    updateProgress();
+  }
+
+  function updateFundedDate() {
+    const d = document.getElementById('funded-date').value;
+    if (!d) return;
+    const dt = new Date(d);
+    document.getElementById('funded-since').textContent =
+      dt.getFullYear() + '/' + String(dt.getMonth()+1).padStart(2,'0') + '/' + String(dt.getDate()).padStart(2,'0');
+    // Review = 30 days from now
+    const rev = new Date(Date.now() + 30 * 86400000);
+    document.getElementById('review-date').value = rev.toISOString().split('T')[0];
+  }
+
+  function updateProgress() {
+    const checks = [
+      n('size') > 0 && document.getElementById('firm').value,
+      n('risk-pct') > 0,
+      n('my-daily') > 0 && document.getElementById('stop-action').value,
+      document.getElementById('ks1').value && (document.getElementById('sc-a').value || document.getElementById('sc-c').value),
+      document.getElementById('scale-up-condition').value,
+      document.getElementById('identity').value.length > 20
+    ];
+    const done = checks.filter(Boolean).length;
+    document.getElementById('prog-fill').style.width = (done / checks.length * 100) + '%';
+    const msgs = ['開始填寫你的規則', '繼續', '進行中', '超過一半了', '快完成了', '最後一步', '完成 — 列印存檔'];
+    document.getElementById('prog-label').textContent = msgs[done];
+  }
+
+  calc();
+
+  // Auto-expand all textareas before printing so content is never clipped
+  window.addEventListener('beforeprint', function() {
+    document.querySelectorAll('textarea').forEach(function(ta) {
+      ta.style.height = 'auto';
+      ta.style.height = ta.scrollHeight + 'px';
+      ta.style.overflow = 'visible';
+      ta.style.minHeight = '0';
+    });
+  });
+  window.addEventListener('afterprint', function() {
+    document.querySelectorAll('textarea').forEach(function(ta) {
+      ta.style.height = '';
+      ta.style.overflow = '';
+      ta.style.minHeight = '';
+    });
+  });
+</script>
+</body>
+</html>
