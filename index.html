@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prop Firm 三層執行系統 — @po_tradediary</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg:#080808;--bg2:#111111;--bg3:#1a1a1a;
+    --gold:#C9A44A;--gold-dim:#a07830;--gold-light:#e8c97a;
+    --text:#f0e8d8;--text-dim:#a89880;--text-muted:#60564a;
+    --border:#2a2218;--radius:6px;
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html{font-size:16px;}
+  body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;min-height:100vh;line-height:1.6;}
+
+  .top-bar{height:4px;background:linear-gradient(90deg,transparent 0%,var(--gold) 30%,var(--gold) 70%,transparent 100%);}
+
+  /* HERO */
+  .hero{padding:56px 32px 44px;text-align:center;border-bottom:1px solid var(--border);}
+  .hero-badge{display:inline-block;background:#0d0b06;border:1px solid var(--gold-dim);border-radius:3px;padding:6px 16px;font-size:12px;color:var(--gold-dim);letter-spacing:.12em;text-transform:uppercase;margin-bottom:20px;}
+  .hero h1{font-family:'Cormorant Garamond',serif;font-size:clamp(32px,6vw,52px);font-weight:600;color:var(--gold-light);line-height:1.15;margin-bottom:16px;}
+  .hero-sub{font-size:15px;color:var(--text-dim);line-height:1.8;max-width:540px;margin:0 auto 36px;}
+
+  /* THREE LAYERS */
+  .layers{display:grid;grid-template-columns:1fr 1fr 1fr;max-width:580px;margin:0 auto;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+  .layer{padding:18px 16px 20px;text-align:center;}
+  .layer.s{border-top:4px solid #cc4444;background:#180808;}
+  .layer.st{border-top:4px solid var(--gold);background:#181000;border-left:1px solid var(--border);border-right:1px solid var(--border);}
+  .layer.t{border-top:4px solid #44aa66;background:#081808;}
+  .layer-en{font-size:12px;font-weight:500;letter-spacing:.06em;margin-bottom:6px;}
+  .layer.s .layer-en{color:#e07070;}
+  .layer.st .layer-en{color:var(--gold);}
+  .layer.t .layer-en{color:#70dd90;}
+  .layer-zh{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:600;margin-bottom:6px;}
+  .layer.s .layer-zh{color:#ee8888;}
+  .layer.st .layer-zh{color:var(--gold-light);}
+  .layer.t .layer-zh{color:#88eeaa;}
+  .layer-desc{font-size:12px;color:var(--text-muted);}
+
+  /* MAIN */
+  .main{padding:40px 24px 80px;max-width:900px;margin:0 auto;}
+
+  /* QUOTE */
+  .quote{border-left:4px solid var(--gold);border-radius:0 var(--radius) var(--radius) 0;background:#0d0b06;padding:20px 24px;margin-bottom:40px;}
+  .quote p{font-size:15px;color:var(--text-dim);line-height:1.85;font-style:italic;}
+  .quote strong{color:var(--text);font-style:normal;}
+
+  /* SECTION LABEL */
+  .sec-label{font-size:11px;color:var(--text-muted);letter-spacing:.14em;text-transform:uppercase;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border);}
+
+  /* TOOL CARDS */
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:36px;}
+  .grid-1{grid-template-columns:1fr;}
+
+  .card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;text-decoration:none;display:block;transition:border-color .2s,background .15s;}
+  .card:hover{border-color:var(--gold-dim);background:var(--bg3);}
+
+  .card-head{padding:14px 18px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+
+  .tag{font-size:11px;padding:3px 10px;border-radius:3px;letter-spacing:.06em;text-transform:uppercase;font-weight:500;white-space:nowrap;}
+  .tag-e{background:#12100a;border:1px solid #3a2e18;color:#a07830;}
+  .tag-s{background:#180808;border:1px solid #5a1a1a;color:#e07070;}
+  .tag-st{background:#181000;border:1px solid var(--gold-dim);color:var(--gold);}
+  .tag-t{background:#081808;border:1px solid #1a5a2a;color:#70dd90;}
+
+  .card-name{font-size:15px;font-weight:500;color:var(--text);}
+
+  .free{font-size:11px;padding:3px 10px;border-radius:3px;background:#081808;border:1px solid #1a5a2a;color:#70dd90;margin-left:auto;white-space:nowrap;}
+
+  .card-body{padding:14px 18px 18px;}
+  .card-timing{font-size:12px;color:var(--gold-dim);margin-bottom:6px;letter-spacing:.03em;}
+  .card-desc{font-size:14px;color:var(--text-dim);line-height:1.7;}
+
+  /* NOTION BLOCK */
+  .notion-block{background:var(--bg2);border:1px solid var(--border);border-top:3px solid var(--gold-dim);border-radius:var(--radius);padding:22px 24px;margin-bottom:40px;display:flex;align-items:flex-start;gap:18px;}
+  .notion-icon{font-size:32px;flex-shrink:0;margin-top:2px;}
+  .notion-body h3{font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--gold-light);margin-bottom:6px;}
+  .notion-body p{font-size:14px;color:var(--text-dim);line-height:1.75;}
+  .notion-btn{display:inline-block;margin-top:14px;padding:10px 20px;background:var(--gold-dim);color:#000;border-radius:var(--radius);font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;letter-spacing:.06em;text-decoration:none;transition:background .2s;}
+  .notion-btn:hover{background:var(--gold);}
+
+  /* FOOTER */
+  .footer{border-top:1px solid var(--border);padding:20px 32px;display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--text-muted);}
+  .footer .handle{color:var(--gold-dim);}
+
+  /* MOBILE */
+  @media(max-width:600px){
+    .hero{padding:40px 20px 32px;}
+    .layers{max-width:100%;}
+    .layer-zh{font-size:22px;}
+    .main{padding:28px 16px 60px;}
+    .grid{grid-template-columns:1fr;}
+    .notion-block{flex-direction:column;}
+    .footer{padding:16px 20px;flex-direction:column;gap:8px;text-align:center;}
+  }
+</style>
+</head>
+<body>
+<div class="top-bar"></div>
+
+<div class="hero">
+  <div class="hero-badge">Prop Firm 三層執行系統</div>
+  <h1>從「知道規則」<br>到「真的做到」</h1>
+  <p class="hero-sub">策略沒有問題。問題是在情緒最強的當下，你的系統在哪裡。這八樣工具就是那個系統。</p>
+
+  <div class="layers">
+    <div class="layer s">
+      <div class="layer-en">Survive</div>
+      <div class="layer-zh">生存</div>
+      <div class="layer-desc">建立地板</div>
+    </div>
+    <div class="layer st">
+      <div class="layer-en">Stabilise</div>
+      <div class="layer-zh">穩定</div>
+      <div class="layer-desc">找出根源</div>
+    </div>
+    <div class="layer t">
+      <div class="layer-en">Thrive</div>
+      <div class="layer-zh">茁壯</div>
+      <div class="layer-desc">建立習慣</div>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+
+  <div class="quote">
+    <p>「<strong>大多數人失敗不是因為策略不好。</strong>是因為在情緒最強的那一刻，沒有一套規則替他們做決定。這八樣工具，就是那套規則。」</p>
+  </div>
+
+  <!-- Entry -->
+  <div class="sec-label">入口工具 — 從這裡開始</div>
+  <div class="grid grid-1" style="margin-bottom:36px;">
+    <a class="card" href="mindset-check.html">
+      <div class="card-head">
+        <div class="tag tag-e">入口</div>
+        <div class="card-name">心態診斷表</div>
+        
+      </div>
+      <div class="card-body">
+        <div class="card-timing">課程開始前，做一次 · 約 3 分鐘</div>
+        <div class="card-desc">找出你的問題在哪一層——風控、心態、還是執行一致性。12 道題目，告訴你從哪裡開始。</div>
+      </div>
+    </a>
+  </div>
+
+  <!-- Survive -->
+  <div class="sec-label">第一層 — Survive · 生存 · 建立讓帳號活下去的地板</div>
+  <div class="grid" style="margin-bottom:36px;">
+    <a class="card" href="risk-challenge.html">
+      <div class="card-head">
+        <div class="tag tag-s">Survive</div>
+        <div class="card-name">風控規則書 · Challenge</div>
+        
+      </div>
+      <div class="card-body">
+        <div class="card-timing">建立一次，每日開盤前確認</div>
+        <div class="card-desc">把你的倉位上限、每日上限、Kill-Switch 四層條件全部書面化。Challenge 階段專用。</div>
+      </div>
+    </a>
+    <a class="card" href="risk-funded.html">
+      <div class="card-head">
+        <div class="tag tag-s">Survive</div>
+        <div class="card-name">風控規則書 · Funded</div>
+      </div>
+      <div class="card-body">
+        <div class="card-timing">Funded 帳號專用版本</div>
+        <div class="card-desc">三段式保護模式、加倉與縮倉協議、Funded 特有情緒場景。通過挑戰後換這份。</div>
+      </div>
+    </a>
+    <a class="card" href="risk-max.html">
+      <div class="card-head">
+        <div class="tag tag-s">Survive</div>
+        <div class="card-name">風控規則書 · Max Allocation</div>
+      </div>
+      <div class="card-body">
+        <div class="card-timing">多帳號管理階段</div>
+        <div class="card-desc">多帳號組合總覽、跨帳號相關性風險控制、提款計畫。管理最大規模時用。</div>
+      </div>
+    </a>
+  </div>
+
+  <!-- Stabilise -->
+  <div class="sec-label">第二層 — Stabilise · 穩定 · 找出情緒崩潰的根源</div>
+  <div class="grid" style="margin-bottom:36px;">
+    <a class="card" href="reset-card.html">
+      <div class="card-head">
+        <div class="tag tag-st">Stabilise</div>
+        <div class="card-name">重置協議卡</div>
+      </div>
+      <div class="card-body">
+        <div class="card-timing">失控當下立即執行</div>
+        <div class="card-desc">三步重置流程，列印後貼在螢幕旁邊。情緒觸發時不需要思考，照著做就對了。</div>
+      </div>
+    </a>
+    <a class="card" href="emotion-map.html">
+      <div class="card-head">
+        <div class="tag tag-st">Stabilise</div>
+        <div class="card-name">情緒觸發地圖</div>
+      </div>
+      <div class="card-body">
+        <div class="card-timing">每週複盤時使用</div>
+        <div class="card-desc">找出「哪個情境」觸發了「哪種情緒」。恐懼型 / Tilt 型 / 過度自信型，讓規律可見。</div>
+      </div>
+    </a>
+  </div>
+
+  <!-- Thrive -->
+  <div class="sec-label">第三層 — Thrive · 茁壯 · 讓好的執行變成習慣</div>
+  <div class="grid" style="margin-bottom:40px;">
+    <a class="card" href="pre-trade.html">
+      <div class="card-head">
+        <div class="tag tag-t">Thrive</div>
+        <div class="card-name">交易前清單</div>
+      </div>
+      <div class="card-body">
+        <div class="card-timing">每筆進場前都用</div>
+        <div class="card-desc">10 個問題，有一個否就不開這筆。攔截衝動進場的最後一道關。</div>
+      </div>
+    </a>
+    <a class="card" href="journal.html">
+      <div class="card-head">
+        <div class="tag tag-t">Thrive</div>
+        <div class="card-name">交易日誌</div>
+      </div>
+      <div class="card-body">
+        <div class="card-timing">每日收盤後 10 分鐘</div>
+        <div class="card-desc">記損益 + 情緒評分 + 決策品質（A/B/C/D）。讓數字告訴你哪裡需要改變。</div>
+      </div>
+    </a>
+    <a class="card" href="scale-up.html">
+      <div class="card-head">
+        <div class="tag tag-t">Thrive</div>
+        <div class="card-name">加倉決策樹</div>
+      </div>
+      <div class="card-body">
+        <div class="card-timing">想增加倉位規模時才用</div>
+        <div class="card-desc">六個關卡全部通過才能加。把「感覺可以了」換成有數據支持的客觀決定。</div>
+      </div>
+    </a>
+  </div>
+
+  <!-- Notion -->
+  <div class="notion-block">
+    <div class="notion-icon">📊</div>
+    <div class="notion-body">
+      <h3>交易日誌系統 — Notion 版</h3>
+      <p>完整的資料庫版本。每筆交易永久存檔、圖表截圖上傳、週複盤 5 題自動對應。複製到你自己的 Notion 工作區，手機電腦都能開，資料永久保存。</p>
+      <a class="notion-btn" href="https://www.notion.so/32bb0049290a811abc9ccebd8ccf9995" target="_blank">開啟 Notion 版本 →</a>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  <div>Prop Firm 三層執行系統 — Survive · Stabilise · Thrive</div>
+  <div class="handle">@po_tradediary</div>
+</div>
+</body>
+</html>

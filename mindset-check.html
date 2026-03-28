@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>心態診斷表 — @po_tradediary</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg:#080808;--bg2:#111111;--bg3:#1a1a1a;
+    --gold:#C9A44A;--gold-dim:#a07830;--gold-light:#e8c97a;
+    --text:#f0e8d8;--text-dim:#a89880;--text-muted:#60564a;
+    --border:#2a2218;--radius:6px;
+    --red:#cc4444;--red-bg:#180808;--red-text:#ee8888;
+    --amber:#c8942a;--amber-bg:#181000;--amber-text:#e8c060;
+    --green:#44aa66;--green-bg:#081808;--green-text:#70dd90;
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;min-height:100vh;line-height:1.6;}
+
+  .top-bar{height:4px;background:linear-gradient(90deg,transparent,var(--gold),transparent);}
+
+  .header{padding:36px 32px 28px;border-bottom:1px solid var(--border);}
+  .tool-badge{display:inline-block;background:#0d0b06;border:1px solid var(--gold-dim);border-radius:3px;padding:5px 14px;font-size:11px;color:var(--gold-dim);letter-spacing:.12em;text-transform:uppercase;margin-bottom:12px;}
+  h1{font-family:'Cormorant Garamond',serif;font-size:clamp(26px,5vw,38px);font-weight:600;color:var(--gold-light);line-height:1.15;margin-bottom:8px;}
+  .header-sub{font-size:14px;color:var(--text-dim);line-height:1.7;}
+
+  .main{padding:32px 32px 80px;max-width:720px;margin:0 auto;}
+
+  /* Intro */
+  .intro{border-left:4px solid var(--gold);background:#0d0b06;padding:18px 22px;border-radius:0 var(--radius) var(--radius) 0;margin-bottom:32px;}
+  .intro p{font-size:14px;color:var(--text-dim);line-height:1.8;}
+  .intro strong{color:var(--text);}
+
+  /* Progress */
+  .progress-wrap{margin-bottom:28px;}
+  .progress-bar{height:4px;background:var(--border);border-radius:2px;overflow:hidden;margin-bottom:10px;}
+  .progress-fill{height:100%;background:var(--gold);transition:width .4s ease;border-radius:2px;}
+  .progress-text{font-size:12px;color:var(--text-muted);display:flex;justify-content:space-between;}
+  .progress-text span{color:var(--gold);}
+
+  /* Question card */
+  .q-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:16px;display:none;}
+  .q-card.active{display:block;}
+
+  .q-num{padding:10px 18px 0;font-size:11px;color:var(--text-muted);letter-spacing:.08em;}
+  .q-text{padding:14px 18px 18px;font-size:16px;color:var(--text);line-height:1.65;font-weight:500;}
+
+  .q-options{padding:0 18px 18px;display:flex;flex-direction:column;gap:8px;}
+
+  .opt-btn{padding:13px 16px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg);color:var(--text-dim);font-family:'JetBrains Mono',monospace;font-size:13px;cursor:pointer;text-align:left;line-height:1.5;transition:all .15s;}
+  .opt-btn:hover{border-color:var(--gold-dim);color:var(--text);background:var(--bg3);}
+  .opt-btn.selected-A{background:#180808;border-color:var(--red);color:var(--red-text);}
+  .opt-btn.selected-B{background:var(--amber-bg);border-color:var(--amber);color:var(--amber-text);}
+  .opt-btn.selected-C{background:var(--green-bg);border-color:var(--green);color:var(--green-text);}
+
+  /* Section divider */
+  .q-section{font-size:11px;color:var(--text-muted);letter-spacing:.1em;text-transform:uppercase;padding:20px 0 12px;border-bottom:1px solid var(--border);margin-bottom:16px;}
+
+  /* Submit */
+  .submit-wrap{margin-top:24px;display:none;}
+  .submit-wrap.show{display:block;}
+  .submit-btn{width:100%;padding:15px;background:var(--gold-dim);color:#000;border:none;border-radius:var(--radius);font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:500;letter-spacing:.08em;cursor:pointer;transition:background .2s;}
+  .submit-btn:hover{background:var(--gold);}
+  .submit-note{font-size:12px;color:var(--text-muted);text-align:center;margin-top:10px;}
+
+  /* ── RESULTS ── */
+  .result-wrap{display:none;}
+  .result-wrap.show{display:block;}
+
+  .result-header{padding:32px 32px 24px;border-bottom:1px solid var(--border);text-align:center;}
+  .result-type-badge{display:inline-block;padding:6px 18px;border-radius:3px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:500;margin-bottom:14px;}
+  .result-title{font-family:'Cormorant Garamond',serif;font-size:clamp(24px,5vw,36px);font-weight:600;line-height:1.2;margin-bottom:10px;}
+  .result-sub{font-size:14px;color:var(--text-dim);line-height:1.75;max-width:540px;margin:0 auto;}
+
+  /* Score bars */
+  .score-section{padding:28px 32px;border-bottom:1px solid var(--border);}
+  .score-section h3{font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--gold-light);margin-bottom:20px;}
+  .score-row{margin-bottom:16px;}
+  .score-label{display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;}
+  .score-label span:first-child{color:var(--text-dim);}
+  .score-label span:last-child{color:var(--text);font-weight:500;}
+  .score-track{height:8px;background:var(--border);border-radius:4px;overflow:hidden;}
+  .score-bar{height:100%;border-radius:4px;transition:width 1s ease;}
+  .bar-red{background:linear-gradient(90deg,var(--red-bg),var(--red));}
+  .bar-amber{background:linear-gradient(90deg,var(--amber-bg),var(--amber));}
+  .bar-green{background:linear-gradient(90deg,var(--green-bg),var(--green));}
+
+  /* Breakdown */
+  .breakdown{padding:28px 32px;border-bottom:1px solid var(--border);}
+  .breakdown h3{font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--gold-light);margin-bottom:18px;}
+  .breakdown-item{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;margin-bottom:12px;}
+  .breakdown-item.highlight{border-color:var(--gold-dim);background:#0d0b06;}
+  .bi-title{font-size:13px;font-weight:500;color:var(--text);margin-bottom:4px;display:flex;align-items:center;gap:8px;}
+  .bi-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+  .dot-red{background:var(--red);}
+  .dot-amber{background:var(--amber);}
+  .dot-green{background:var(--green);}
+  .bi-desc{font-size:13px;color:var(--text-dim);line-height:1.7;}
+
+  /* Action plan */
+  .action-plan{padding:28px 32px;border-bottom:1px solid var(--border);}
+  .action-plan h3{font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--gold-light);margin-bottom:18px;}
+  .action-step{display:flex;gap:14px;margin-bottom:16px;align-items:flex-start;}
+  .step-num{width:28px;height:28px;min-width:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;flex-shrink:0;margin-top:1px;}
+  .step-num-1{background:#1a1000;border:1px solid var(--gold-dim);color:var(--gold);}
+  .step-num-2{background:#0a1a0e;border:1px solid var(--green);color:var(--green-text);}
+  .step-num-3{background:#180808;border:1px solid var(--red);color:var(--red-text);}
+  .step-content h4{font-size:13px;font-weight:500;color:var(--text);margin-bottom:3px;}
+  .step-content p{font-size:13px;color:var(--text-dim);line-height:1.65;}
+
+  /* Tool link */
+  .tool-link{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);text-decoration:none;color:var(--text);transition:border-color .2s;margin-top:6px;}
+  .tool-link:hover{border-color:var(--gold-dim);}
+  .tool-link-tag{font-size:10px;padding:2px 8px;border-radius:2px;white-space:nowrap;}
+  .tl-s{background:var(--red-bg);border:1px solid #5a1a1a;color:var(--red-text);}
+  .tl-st{background:var(--amber-bg);border:1px solid var(--amber);color:var(--amber-text);}
+  .tl-t{background:var(--green-bg);border:1px solid #1a5a2a;color:var(--green-text);}
+  .tool-link-name{font-size:13px;font-weight:500;}
+  .tool-link-arrow{margin-left:auto;color:var(--text-muted);}
+
+  /* Restart */
+  .restart-wrap{padding:24px 32px;text-align:center;}
+  .restart-btn{background:transparent;border:1px solid var(--border);color:var(--text-muted);padding:10px 24px;border-radius:var(--radius);font-family:'JetBrains Mono',monospace;font-size:12px;cursor:pointer;transition:all .2s;}
+  .restart-btn:hover{border-color:var(--gold-dim);color:var(--text-dim);}
+
+  .footer{border-top:1px solid var(--border);padding:18px 32px;display:flex;justify-content:space-between;font-size:12px;color:var(--text-muted);}
+  .footer .handle{color:var(--gold-dim);}
+
+  @media(max-width:600px){
+    .header,.main,.result-header,.score-section,.breakdown,.action-plan,.restart-wrap{padding-left:20px;padding-right:20px;}
+    h1{font-size:24px;}
+    .q-text{font-size:15px;}
+    .opt-btn{font-size:12px;}
+  }
+</style>
+</head>
+<body>
+<div class="top-bar"></div>
+
+<div id="quiz-view">
+  <div class="header">
+    <div class="tool-badge">入口工具 — 從這裡開始</div>
+    <h1>心態診斷表</h1>
+    <div class="header-sub">12 個問題，找出你的問題在哪一層，以及你最需要的工具是什麼</div>
+  </div>
+
+  <div class="main">
+    <div class="intro">
+      <p><strong>怎麼填：</strong>選最接近你「現在真實情況」的答案，不是你覺得應該有的答案。不需要想太久，第一直覺通常是最準的。</p>
+    </div>
+
+    <div class="progress-wrap">
+      <div class="progress-bar"><div class="progress-fill" id="prog-fill" style="width:0%"></div></div>
+      <div class="progress-text"><span id="prog-text">尚未開始</span><span><span id="prog-count">0</span> / 12</span></div>
+    </div>
+
+    <!-- Section 1: Risk -->
+    <div class="q-section" id="sec1">第一部分 — 風控執行</div>
+
+    <div class="q-card active" data-q="1" data-section="survive">
+      <div class="q-num">問題 01 / 12</div>
+      <div class="q-text">你現在有沒有一份寫下來的風控規則書——包含每筆倉位上限、個人每日損失上限、以及 Kill-Switch 觸發條件？</div>
+      <div class="q-options">
+        <button class="opt-btn" data-val="A" onclick="answer(this,1,'A')">沒有。我在腦子裡大概知道，但沒有寫下來。</button>
+        <button class="opt-btn" data-val="B" onclick="answer(this,1,'B')">有寫，但規則不夠具體，或者我有時候不照著做。</button>
+        <button class="opt-btn" data-val="C" onclick="answer(this,1,'C')">有，規則很具體，我每日開盤前都會確認一次。</button>
+      </div>
+    </div>
+
+    <div class="q-card" data-q="2" data-section="survive">
+      <div class="q-num">問題 02 / 12</div>
+      <div class="q-text">上週交易，有沒有哪筆交易的倉位超過了你原來計畫的風險比例？</div>
+      <div class="q-options">
+        <button class="opt-btn" data-val="A" onclick="answer(this,2,'A')">有，而且不只一次。</button>
+        <button class="opt-btn" data-val="B" onclick="answer(this,2,'B')">有一次，我知道不對但當下還是做了。</button>
+        <button class="opt-btn" data-val="C" onclick="answer(this,2,'C')">沒有。我的每筆倉位都在規則範圍內。</button>
+      </div>
+    </div>
+
+    <div class="q-card" data-q="3" data-section="survive">
+      <div class="q-num">問題 03 / 12</div>
+      <div class="q-text">當你連輸兩筆之後，你通常會怎麼做？</div>
+      <div class="q-options">
+        <button class="opt-btn" data-val="A" onclick="answer(this,3,'A')">繼續交易，希望下一筆能把損失追回來。</button>
+        <button class="opt-btn" data-val="B" onclick="answer(this,3,'B')">會暫停一下，但暫停多久和下一步怎麼做，我沒有具體規則。</button>
+        <button class="opt-btn" data-val="C" onclick="answer(this,3,'C')">我有具體的 Kill-Switch 規則，連輸達到條件我會強制停止。</button>
+      </div>
+    </div>
+
+    <!-- Section 2: Mindset -->
+    <div class="q-section" id="sec2" style="display:none">第二部分 — 情緒管理</div>
+
+    <div class="q-card" data-q="4" data-section="stabilise">
+      <div class="q-num">問題 04 / 12</div>
+      <div class="q-text">你能不能說清楚你最常出現的情緒失控是哪一種？</div>
+      <div class="q-options">
+        <button class="opt-btn" data-val="A" onclick="answer(this,4,'A')">說不清楚。我只知道「那天狀態不好」，但不知道具體是什麼模式。</button>
+        <button class="opt-btn" data-val="B" onclick="answer(this,4,'B')">大概知道，但沒有系統性地記錄和分析過。</button>
+        <button class="opt-btn" data-val="C" onclick="answer(this,4,'C')">很清楚。我能說出具體的觸發情境和我的典型反應。</button>
+      </div>
+    </div>
+
+    <div class="q-card" data-q="5" data-section="stabilise">
+      <div class="q-num">問題 05 / 12</div>
+      <div class="q-text">當你感覺快要失控（想加大倉位、想報復交易、或手很癢想進場）的當下，你有沒有一套具體的步驟可以執行？</div>
+      <div class="q-options">
+        <button class="opt-btn" data-val="A" onclick="answer(this,5,'A')">沒有。靠意志力硬撐，有時候撐得住，有時候不行。</button>
+        <button class="opt-btn" data-val="B" onclick="answer(this,5,'B')">有一些想法，但不夠具體，每次情況不一樣。</button>
+        <button class="opt-btn" data-val="C" onclick="answer(this,5,'C')">有，我有一套寫下來的重置流程，失控時照著做。</button>
+      </div>
+    </div>
+
+    <div class="q-card" data-q="6" data-section="stabilise">
+      <div class="q-num">問題 06 / 12</div>
+      <div class="q-text">你覆盤的時候，有沒有把情緒對交易決策的影響記錄下來，不只是看技術面？</div>
+      <div class="q-options">
+        <button class="opt-btn" data-val="A" onclick="answer(this,6,'A')">沒有，我的覆盤主要看進場點、止損、目標價對不對。</button>
+        <button class="opt-btn" data-val="B" onclick="answer(this,6,'B')">偶爾會想到，但沒有系統性地記錄。</button>
+        <button class="opt-btn" data-val="C" onclick="answer(this,6,'C')">有，我每次都會記錄情緒評分和決策品質，週複盤時分析。</button>
+      </div>
+    </div>
+
+    <!-- Section 3: Execution -->
+    <div class="q-section" id="sec3" style="display:none">第三部分 — 執行一致性</div>
+
+    <div class="q-card" data-q="7" data-section="thrive">
+      <div class="q-num">問題 07 / 12</div>
+      <div class="q-text">你每次進場前，有沒有走一個固定的確認流程，確保這筆符合所有條件？</div>
+      <div class="q-options">
+        <button class="opt-btn" data-val="A" onclick="answer(this,7,'A')">沒有。看起來對就進，很少系統性地確認每個條件。</button>
+        <button class="opt-btn" data-val="B" onclick="answer(this,7,'B')">有在腦子裡過一遍，但沒有寫下來的清單。</button>
+        <button class="opt-btn" data-val="C" onclick="answer(this,7,'C')">有，我有一份交易前清單，每筆進場前都用。</button>
+      </div>
+    </div>
+
+    <div class="q-card" data-q="8" data-section="thrive">
+      <div class="q-num">問題 08 / 12</div>
+      <div class="q-text">你每週能不能說出「這週我的執行哪裡做得好、哪裡需要改進」，並且給出具體例子？</div>
+      <div class="q-options">
+        <button class="opt-btn" data-val="A" onclick="answer(this,8,'A')">不太能。感覺這週還好或不好，但說不出具體的。</button>
+        <button class="opt-btn" data-val="B" onclick="answer(this,8,'B')">能說出一些，但沒有數據支持，比較是印象。</button>
+        <button class="opt-btn" data-val="C" onclick="answer(this,8,'C')">能，我的日誌有情緒評分和決策品質，週複盤可以直接看數據。</button>
+      </div>
+    </div>
+
+    <div class="q-card" data-q="9" data-section="thrive">
+      <div class="q-num">問題 09 / 12</div>
+      <div class="q-text">你的好日子和壞日子，在執行上有什麼規律嗎？</div>
+      <div class="q-options">
+        <button class="opt-btn" data-val="A" onclick="answer(this,9,'A')">不知道為什麼好，也不知道為什麼壞，感覺很隨機。</button>
+        <button class="opt-btn" data-val="B" onclick="answer(this,9,'B')">有一些感覺，但沒有辦法用數據驗證。</button>
+        <button class="opt-btn" data-val="C" onclick="answer(this,9,'C')">知道，我從日誌裡看出了幾個規律，例如哪個時段或情緒狀態下表現最穩定。</button>
+      </div>
+    </div>
+
+    <!-- Section 4: Identity -->
+    <div class="q-section" id="sec4" style="display:none">第四部分 — 身份與框架</div>
+
+    <div class="q-card" data-q="10" data-section="identity">
+      <div class="q-num">問題 10 / 12</div>
+      <div class="q-text">你覆盤失敗的交易時，你的第一反應通常是什麼？</div>
+      <div class="q-options">
+        <button class="opt-btn" data-val="A" onclick="answer(this,10,'A')">主要看進場點哪裡出問題，或策略是不是需要調整。</button>
+        <button class="opt-btn" data-val="B" onclick="answer(this,10,'B')">有時候看技術，有時候會想到情緒，但沒有固定的覆盤架構。</button>
+        <button class="opt-btn" data-val="C" onclick="answer(this,10,'C')">先看執行的決策品質，再看技術。我知道很多失敗不是策略問題。</button>
+      </div>
+    </div>
+
+    <div class="q-card" data-q="11" data-section="identity">
+      <div class="q-num">問題 11 / 12</div>
+      <div class="q-text">如果有人問你「你為什麼可以穩定通過 Prop Firm 挑戰」，你能給出一個清楚的答案嗎？</div>
+      <div class="q-options">
+        <button class="opt-btn" data-val="A" onclick="answer(this,11,'A')">還沒有穩定通過。或者我說不清楚為什麼有時候能過、有時候不能。</button>
+        <button class="opt-btn" data-val="B" onclick="answer(this,11,'B')">有一些想法，但還沒有形成一套可以清楚說明的系統。</button>
+        <button class="opt-btn" data-val="C" onclick="answer(this,11,'C')">可以。我有一套具體的執行系統，我知道它為什麼有效。</button>
+      </div>
+    </div>
+
+    <div class="q-card" data-q="12" data-section="identity">
+      <div class="q-num">問題 12 / 12</div>
+      <div class="q-text">現在，你最主要的交易問題是什麼？</div>
+      <div class="q-options">
+        <button class="opt-btn" data-val="A" onclick="answer(this,12,'A')">我知道規則，但在當下還是會打破——開大單、報復交易、或不照計畫出場。</button>
+        <button class="opt-btn" data-val="B" onclick="answer(this,12,'B')">我的執行還好，但我不確定自己有沒有在穩定進步，還是在原地踏步。</button>
+        <button class="opt-btn" data-val="C" onclick="answer(this,12,'C')">我主要還在努力搞清楚自己的策略，或者找到穩定盈利的方法。</button>
+      </div>
+    </div>
+
+    <div class="submit-wrap" id="submit-wrap">
+      <button class="submit-btn" onclick="showResult()">查看診斷結果 →</button>
+      <div class="submit-note">12 題全部回答後才能查看結果</div>
+    </div>
+  </div>
+</div>
+
+<!-- RESULT VIEW -->
+<div id="result-view" class="result-wrap">
+
+  <div class="result-header">
+    <div class="result-type-badge" id="r-badge"></div>
+    <div class="result-title" id="r-title"></div>
+    <div class="result-sub" id="r-sub"></div>
+  </div>
+
+  <div class="score-section">
+    <h3>你的三層評分</h3>
+    <div class="score-row">
+      <div class="score-label"><span>第一層 — Survive · 生存（風控架構）</span><span id="s-score"></span></div>
+      <div class="score-track"><div class="score-bar bar-red" id="s-bar" style="width:0%"></div></div>
+    </div>
+    <div class="score-row">
+      <div class="score-label"><span>第二層 — Stabilise · 穩定（心態管理）</span><span id="st-score"></span></div>
+      <div class="score-track"><div class="score-bar bar-amber" id="st-bar" style="width:0%"></div></div>
+    </div>
+    <div class="score-row">
+      <div class="score-label"><span>第三層 — Thrive · 茁壯（執行一致性）</span><span id="t-score"></span></div>
+      <div class="score-track"><div class="score-bar bar-green" id="t-bar" style="width:0%"></div></div>
+    </div>
+  </div>
+
+  <div class="breakdown">
+    <h3>你的主要問題在哪裡</h3>
+    <div id="breakdown-content"></div>
+  </div>
+
+  <div class="action-plan">
+    <h3>建議你從這裡開始</h3>
+    <div id="action-content"></div>
+  </div>
+
+  <div class="restart-wrap">
+    <button class="restart-btn" onclick="restart()">↺ 重新診斷</button>
+  </div>
+
+</div>
+
+<div class="footer">
+  <div>心態診斷表 — Survive · Stabilise · Thrive</div>
+  <div class="handle">@po_tradediary</div>
+</div>
+
+<script>
+  const answers = {};
+  const scoreMap = { A: 0, B: 1, C: 2 };
+
+  // Section mapping
+  const qSection = {
+    1:'survive',2:'survive',3:'survive',
+    4:'stabilise',5:'stabilise',6:'stabilise',
+    7:'thrive',8:'thrive',9:'thrive',
+    10:'identity',11:'identity',12:'identity'
+  };
+
+  function answer(btn, q, val) {
+    // Clear previous selection for this q
+    document.querySelectorAll(`[data-q="${q}"] .opt-btn`).forEach(b => {
+      b.classList.remove('selected-A','selected-B','selected-C');
+    });
+    btn.classList.add('selected-' + val);
+    answers[q] = val;
+    updateProgress();
+
+    // Auto-advance after short delay
+    setTimeout(() => {
+      const next = q + 1;
+      const nextCard = document.querySelector(`[data-q="${next}"]`);
+      if (nextCard) {
+        // Show section headers
+        if (next === 4) document.getElementById('sec2').style.display = 'block';
+        if (next === 7) document.getElementById('sec3').style.display = 'block';
+        if (next === 10) document.getElementById('sec4').style.display = 'block';
+        nextCard.classList.add('active');
+        nextCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 280);
+  }
+
+  function updateProgress() {
+    const count = Object.keys(answers).length;
+    const pct = count / 12 * 100;
+    document.getElementById('prog-fill').style.width = pct + '%';
+    document.getElementById('prog-count').textContent = count;
+    document.getElementById('prog-text').textContent = count < 12 ? `已回答 ${count} 題` : '全部完成';
+
+    const sw = document.getElementById('submit-wrap');
+    if (count === 12) sw.classList.add('show');
+  }
+
+  function calcScores() {
+    let survive = 0, stabilise = 0, thrive = 0, identity = 0;
+    for (let q = 1; q <= 12; q++) {
+      const v = scoreMap[answers[q]] || 0;
+      const sec = qSection[q];
+      if (sec === 'survive') survive += v;
+      if (sec === 'stabilise') stabilise += v;
+      if (sec === 'thrive') thrive += v;
+      if (sec === 'identity') identity += v;
+    }
+    // Each section max = 6 (3 questions × 2 pts)
+    // Combined thrive+identity for Thrive layer
+    return {
+      survive: Math.round(survive / 6 * 100),
+      stabilise: Math.round(stabilise / 6 * 100),
+      thrive: Math.round((thrive + identity) / 12 * 100)
+    };
+  }
+
+  function showResult() {
+    const scores = calcScores();
+    document.getElementById('quiz-view').style.display = 'none';
+    const rv = document.getElementById('result-view');
+    rv.classList.add('show');
+    window.scrollTo(0, 0);
+
+    // Scores
+    document.getElementById('s-score').textContent = scores.survive + '%';
+    document.getElementById('st-score').textContent = scores.stabilise + '%';
+    document.getElementById('t-score').textContent = scores.thrive + '%';
+
+    setTimeout(() => {
+      document.getElementById('s-bar').style.width = scores.survive + '%';
+      document.getElementById('st-bar').style.width = scores.stabilise + '%';
+      document.getElementById('t-bar').style.width = scores.thrive + '%';
+    }, 200);
+
+    // Determine primary result type
+    const minScore = Math.min(scores.survive, scores.stabilise, scores.thrive);
+    const q12 = answers[12];
+
+    let type;
+    if (scores.survive <= scores.stabilise && scores.survive <= scores.thrive) {
+      type = 'survive';
+    } else if (scores.stabilise <= scores.thrive) {
+      type = 'stabilise';
+    } else {
+      type = 'thrive';
+    }
+
+    // Special case: if they said strategy is their problem (q12=C), note it
+    const strategyNote = q12 === 'C';
+
+    renderResult(type, scores, strategyNote);
+  }
+
+  function renderResult(type, scores, strategyNote) {
+    const badge = document.getElementById('r-badge');
+    const title = document.getElementById('r-title');
+    const sub = document.getElementById('r-sub');
+    const bd = document.getElementById('breakdown-content');
+    const ac = document.getElementById('action-content');
+
+    const results = {
+      survive: {
+        badgeText: '第一層需要加強',
+        badgeStyle: 'background:#180808;border:1px solid #cc4444;color:#ee8888;',
+        titleText: '地板還沒建好',
+        titleColor: '#ee8888',
+        subText: '你的問題不是心態不夠好，是在情緒問題發生之前，帳號還沒有被規則保護住。一旦風控架構不在，任何心態工具都是在沙灘上蓋房子。',
+        breakdown: `
+          <div class="breakdown-item highlight">
+            <div class="bi-title"><div class="bi-dot dot-red"></div>主要問題：風控規則沒有書面化或沒有執行</div>
+            <div class="bi-desc">你知道要控制倉位和損失，但規則在腦子裡，不在紙上。在情緒最強的當下，腦子裡的規則會被情緒覆蓋。你需要的是一份寫下來的規則，讓規則在你失去判斷力的時候替你做決定。</div>
+          </div>
+          <div class="breakdown-item">
+            <div class="bi-title"><div class="bi-dot dot-amber"></div>次要問題：Kill-Switch 條件不夠具體</div>
+            <div class="bi-desc">「連輸後暫停」這個想法沒有錯，但「暫停多久、怎麼判斷可以繼續」如果不夠具體，就不是規則，只是願望。</div>
+          </div>`,
+        actions: `
+          <div class="action-step"><div class="step-num step-num-1">1</div><div class="step-content"><h4>立刻做：填寫風控規則書</h4><p>把你的每筆倉位上限、個人每日上限、Kill-Switch 四層觸發條件全部寫下來。選擇對應你帳號階段的版本（Challenge / Funded / Max）。</p></div></div>
+          <a class="tool-link" href="risk-challenge.html"><div class="tool-link-tag tl-s">Survive</div><div class="tool-link-name">風控規則書 · Challenge 版</div><div class="tool-link-arrow">→</div></a>
+          <a class="tool-link" href="risk-funded.html"><div class="tool-link-tag tl-s">Survive</div><div class="tool-link-name">風控規則書 · Funded 版</div><div class="tool-link-arrow">→</div></a>
+          <div class="action-step" style="margin-top:16px"><div class="step-num step-num-2">2</div><div class="step-content"><h4>列印出來，放在交易螢幕旁邊</h4><p>不是存在電腦裡，是印出來可以看見的那種。開盤前確認一次。</p></div></div>
+          <div class="action-step"><div class="step-num step-num-3">3</div><div class="step-content"><h4>建立你的重置協議</h4><p>第一層建好之後，立刻建立失控時的三步重置流程。這是第二層的入口。</p></div></div>
+          <a class="tool-link" href="reset-card.html"><div class="tool-link-tag tl-st">Stabilise</div><div class="tool-link-name">重置協議卡</div><div class="tool-link-arrow">→</div></a>`
+      },
+      stabilise: {
+        badgeText: '第二層需要加強',
+        badgeStyle: 'background:#181000;border:1px solid #c8942a;color:#e8c060;',
+        titleText: '規則有了，但情緒還在接管',
+        titleColor: '#e8c060',
+        subText: '你大概知道風控規則，但在情緒觸發的當下——連輸之後、接近每日上限時、或剛連贏幾筆覺得狀態很好——你的執行開始不穩定。問題不是意志力不夠，是你還沒有一套讓情緒出現時可以自動執行的機制。',
+        breakdown: `
+          <div class="breakdown-item highlight">
+            <div class="bi-title"><div class="bi-dot dot-amber"></div>主要問題：沒有找出自己的情緒觸發規律</div>
+            <div class="bi-desc">你知道自己「有時候會失控」，但說不出是什麼情境觸發了什麼情緒。這讓你每次失控都覺得是意外，而不是一個可以預防的模式。把觸發規律具體化，是改變的第一步。</div>
+          </div>
+          <div class="breakdown-item">
+            <div class="bi-title"><div class="bi-dot dot-amber"></div>次要問題：失控當下沒有可執行的具體步驟</div>
+            <div class="bi-desc">靠意志力在失控當下做對決定，成功率很低。你需要的是一套在情緒清醒時就寫好的重置流程，讓失控當下不需要判斷，照著做就好。</div>
+          </div>`,
+        actions: `
+          <div class="action-step"><div class="step-num step-num-1">1</div><div class="step-content"><h4>立刻做：建立重置協議卡</h4><p>三步重置流程，填完列印，貼在螢幕旁邊。這是你在情緒最強的當下唯一需要看的東西。</p></div></div>
+          <a class="tool-link" href="reset-card.html"><div class="tool-link-tag tl-st">Stabilise</div><div class="tool-link-name">重置協議卡</div><div class="tool-link-arrow">→</div></a>
+          <div class="action-step" style="margin-top:16px"><div class="step-num step-num-2">2</div><div class="step-content"><h4>每週複盤時：填寫情緒觸發地圖</h4><p>在清醒的時候回顧這週的失控情境，找出你的觸發規律。恐懼型 / Tilt 型 / 過度自信型——先認出它，才能預防它。</p></div></div>
+          <a class="tool-link" href="emotion-map.html"><div class="tool-link-tag tl-st">Stabilise</div><div class="tool-link-name">情緒觸發地圖</div><div class="tool-link-arrow">→</div></a>
+          <div class="action-step"><div class="step-num step-num-3">3</div><div class="step-content"><h4>下一步：開始每日記錄決策品質</h4><p>有了日誌數據，你的觸發地圖週複盤才有原始材料。</p></div></div>
+          <a class="tool-link" href="journal.html"><div class="tool-link-tag tl-t">Thrive</div><div class="tool-link-name">交易日誌</div><div class="tool-link-arrow">→</div></a>`
+      },
+      thrive: {
+        badgeText: '第三層需要精進',
+        badgeStyle: 'background:#081808;border:1px solid #44aa66;color:#70dd90;',
+        titleText: '基礎不錯，但執行還不夠一致',
+        titleColor: '#70dd90',
+        subText: '你有風控意識，也大概知道自己的情緒問題。現在缺的是把「偶爾做對」變成「穩定可複製」的執行系統——讓每一筆交易都有記錄，讓每週複盤都有數據，讓進步變得可以看見。',
+        breakdown: `
+          <div class="breakdown-item highlight">
+            <div class="bi-title"><div class="bi-dot dot-green"></div>主要問題：好的執行是即興的，不是系統化的</div>
+            <div class="bi-desc">你有好日子也有壞日子，但說不出為什麼。這代表你的執行還沒有形成可重複的習慣——它依賴當天的狀態，而不是一套固定的流程。把你做對的事情外化成清單和日誌，才能穩定複製。</div>
+          </div>
+          <div class="breakdown-item">
+            <div class="bi-title"><div class="bi-dot dot-green"></div>次要問題：沒有足夠的數據看清自己的模式</div>
+            <div class="bi-desc">沒有日誌，你只有感覺。有了日誌，你才有數據——哪個時段表現最好、哪種情緒狀態下決策品質最高、清單使用率和勝率之間有沒有關聯。</div>
+          </div>`,
+        actions: `
+          <div class="action-step"><div class="step-num step-num-1">1</div><div class="step-content"><h4>立刻做：每筆進場前用交易前清單</h4><p>10 個問題，有一個否就不開這筆。把「感覺好像對」換成「10 個條件都確認過了」。</p></div></div>
+          <a class="tool-link" href="pre-trade.html"><div class="tool-link-tag tl-t">Thrive</div><div class="tool-link-name">交易前清單</div><div class="tool-link-arrow">→</div></a>
+          <div class="action-step" style="margin-top:16px"><div class="step-num step-num-2">2</div><div class="step-content"><h4>每日收盤後 10 分鐘：填交易日誌</h4><p>記損益 + 情緒評分 + 決策品質（A/B/C/D）。讓數據告訴你哪裡需要改變，不是感覺。</p></div></div>
+          <a class="tool-link" href="journal.html"><div class="tool-link-tag tl-t">Thrive</div><div class="tool-link-name">交易日誌</div><div class="tool-link-arrow">→</div></a>
+          <div class="action-step"><div class="step-num step-num-3">3</div><div class="step-content"><h4>想加倉的時候：先走加倉決策樹</h4><p>六個關卡全部通過才加。把「感覺可以了」換成有數據支持的決定。</p></div></div>
+          <a class="tool-link" href="scale-up.html"><div class="tool-link-tag tl-t">Thrive</div><div class="tool-link-name">加倉決策樹</div><div class="tool-link-arrow">→</div></a>`
+      }
+    };
+
+    const r = results[type];
+    badge.style.cssText = r.badgeStyle;
+    badge.textContent = r.badgeText;
+    title.style.color = r.titleColor;
+    title.textContent = r.titleText;
+    sub.textContent = r.subText + (strategyNote ? '（如果你覺得自己還缺一個更好的策略，這套系統暫時解決不了這個問題——它解決的是已經有策略但執行不穩的問題。）' : '');
+    bd.innerHTML = r.breakdown;
+    ac.innerHTML = r.actions;
+
+    // Score labels
+    const label = v => v >= 70 ? '穩固' : v >= 40 ? '需要加強' : '需要優先處理';
+    document.getElementById('s-score').textContent = scores.survive + '% · ' + label(scores.survive);
+    document.getElementById('st-score').textContent = scores.stabilise + '% · ' + label(scores.stabilise);
+    document.getElementById('t-score').textContent = scores.thrive + '% · ' + label(scores.thrive);
+  }
+
+  function restart() {
+    Object.keys(answers).forEach(k => delete answers[k]);
+    document.querySelectorAll('.opt-btn').forEach(b => b.classList.remove('selected-A','selected-B','selected-C'));
+    document.querySelectorAll('.q-card').forEach((c,i) => c.classList.toggle('active', i === 0));
+    document.getElementById('sec2').style.display = 'none';
+    document.getElementById('sec3').style.display = 'none';
+    document.getElementById('sec4').style.display = 'none';
+    document.getElementById('submit-wrap').classList.remove('show');
+    document.getElementById('prog-fill').style.width = '0%';
+    document.getElementById('prog-count').textContent = '0';
+    document.getElementById('prog-text').textContent = '尚未開始';
+    document.getElementById('result-view').classList.remove('show');
+    document.getElementById('quiz-view').style.display = 'block';
+    window.scrollTo(0, 0);
+  }
+</script>
+</body>
+</html>
